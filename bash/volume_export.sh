@@ -59,7 +59,7 @@ echo Successfully mounted cloned volume $sourceclonedvolid to host $sourcehostna
 
 echo Beginning qemu-img conversion 
 
-qemu-img convert -f raw -O qcow2 $sourcedevaddress /mnt/mancala0/exportedvm.qcow2
+qemu-img convert -f raw -O qcow2 -p $sourcedevaddress /mnt/mancala0/exportedvm.qcow2
 
 echo Successfully completed conversion to /mnt/mancala0
 
