@@ -13,7 +13,7 @@ def upload_file(s3, bucketname, file_path):
         b = s3.get_bucket(bucketname)
 
         filename = os.path.basename(file_path)
-        k = b.new_key(filename)
+        # k = b.new_key(filename)
 
         mp = b.initiate_multipart_upload(filename)
 
