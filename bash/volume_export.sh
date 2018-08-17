@@ -17,6 +17,15 @@ display_usage() {
 	echo -e "\nUsage:\nsource-user-name source-domain source-password source-cluster-address source-volume-id destination-user destination-domain destination-password destination-cluster destination-image-name\n"
 	}
 
+log_or_exit() {
+    if [ $1 == 0 ]
+    then
+        echo $2
+    else
+        exit $1
+    fi
+}
+
 # if less than 9 arguments supplied, display usage
 if [  $# -le 9 ]
 then
@@ -49,52 +58,48 @@ echo Cloning $sourcevolid
 
 sourceclonedvolid="$(symp -k --url $sourcecluster -d $sourcedomain -u $sourceuser -p $sourcepassword volume create --source-id $sourcevolid tempvol_toexport -f value -c id)"
 
-echo Cloning successful, cloned volume ID is $sourceclonedvolid
+log_or_exit $? "Cloning successful, cloned volume ID is $sourceclonedvolid"
 
 echo Attaching cloned volume $sourceclonedvolid to host $sourcehostname
 
 sourcedevaddress="$(mancala volumes attach-to-host $sourceclonedvolid $sourcehostname --json | jq -r .attachments[].mountpoint)"
 
-echo Successfully mounted cloned volume $sourceclonedvolid to host $sourcehostname at $sourcedevaddress
+log_or_exit $? "Successfully mounted cloned volume $sourceclonedvolid to host $sourcehostname at $sourcedevaddress"
 
 echo Beginning qemu-img conversion 
 
 qemu-img convert -f raw -O qcow2 -p $sourcedevaddress /mnt/mancala0/exportedvm.qcow2
 
-echo Successfully completed conversion to /mnt/mancala0
+log_or_exit $? "Successfully completed conversion to /mnt/mancala0"
 
 echo Unattaching cloned volume $sourceclonevolid from host $sourcehostname
 
 mancala volumes detach-from-host $sourceclonedvolid $sourcehostname
 
-echo Successfully detached cloned volume $sourceclonevolid from host $sourcehostname
+log_or_exit $? "Successfully detached cloned volume $sourceclonevolid from host $sourcehostname"
 
 echo Deleting cloned volume $sourceclonedvolid 
 
 symp -k --url $sourcecluster -d $sourcedomain -u $sourceuser -p $sourcepassword volume remove $sourceclonedvolid
 
-echo Successfully deleted cloned volume
+log_or_exit $? "Successfully deleted cloned volume"
 
 echo Creating image $destimagename on destination cluster $destcluster
 
 destimageid="$(symp -k --url $destcluster -d $destdomain -u $destuser -p $destpassword image create $destimagename -f value -c id)"
 
-echo Successfully created image $destimagename with ID $destimageid
+log_or_exit $? "Successfully created image $destimagename with ID $destimageid"
 
 echo Uploading image..
 
 symp -k --url $destcluster -d $destdomain -u $destuser -p $destpassword image upload $destimageid /mnt/mancala0/exportedvm.qcow2
 
-echo Successfully uploaded image. 
+log_or_exit $? "Successfully uploaded image."
 
 echo Deleting qcow2 file
 
 rm -f /mnt/mancala0/exportedvm.qcow2
 
-echo Deleted qcow2 file. 
+log_or_exit $? "Deleted qcow2 file."
 
-echo All done. 
-
-
-
-
+echo All done.
